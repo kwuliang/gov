@@ -15,7 +15,14 @@
 	- `DOMAINS_LIST` 需要采集的站点的列表，支持`txt`格式或`xls`
 	- `MONGO_DB` mongoDB数据库的名字，它将保存所有资源关系
 
-3. 启动splash，启动redis，配置好mongoDB
+3. 启动redis，配置好mongoDB
 
-4. 启动scrapy：`scrapy crawl gov`
+4. 启动splash
+
+```
+sudo docker pull scrapinghub/splash 
+sudo docker run -p 8050:8050 scrapinghub/splash
+```
+
+5. 启动scrapy：`scrapy crawl gov`
 
