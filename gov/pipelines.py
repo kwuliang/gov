@@ -4,7 +4,6 @@ from itemadapter import ItemAdapter
 #使用mongodb存储资源对应关系
 
 class MongoPipeline:
-    collection_name = 'scrapy_gov_items'
 
     def __init__(self, mongo_uri, mongo_db):
         self.mongo_uri = mongo_uri
@@ -45,7 +44,7 @@ class MongoPipeline:
             每个实现保存的类里面必须都要有这个方法，且名字固定，用来具体实现怎么保存
         '''
 
-        table = self.db[self.collection_name]
+        collection_name = item['domain_collection']
+        table = self.db[collection_name]
         table.insert_one(ItemAdapter(item).asdict())
         return item
-
