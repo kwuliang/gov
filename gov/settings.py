@@ -10,8 +10,10 @@ MONGO_DB = 'scrapy_gov'
 REDIS_HOST = '127.0.0.1'
 REDIS_PORT = 6379
 
+# for example DATA_DIR = '/home/user/data/'
 DATA_DIR = ''
 
+# for example DOMAINS_LIST = '/home/user/sites.xls'
 DOMAINS_LIST = ''
 
 SPLASH_URL = 'http://localhost:8050'

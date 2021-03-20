@@ -10,7 +10,7 @@ from scrapy_splash import SplashRequest, SplashJsonResponse, SplashTextResponse
 
 from gov.items import GovItem
 from gov.utils import md5_encode, make_file_name, get_start_urls
-from gov.settings import REDIS_HOST, REDIS_PORT, DATA_DIR, DOMAINS_LIST
+from gov.settings import REDIS_HOST, REDIS_PORT, DATA_DIR, DOMAINS_LIST, REDIS_DUPLICATE
  
 
 
@@ -43,7 +43,8 @@ class GovSpider(CrawlSpider):
 
     def parse_item(self,response):
         if not REDIS_DUPLICATE:
-            self._parse(self,response)
+            return self._real_parse_item(response)
+
         else:
             is_crawled_status = self.is_crawled(response.body)
 
@@ -53,12 +54,10 @@ class GovSpider(CrawlSpider):
             elif is_crawled_status == 0:
                 self.logger.info('数据没有进行更新')
             elif is_crawled_status == 1:
-                self._parse_item(self,response)
+                return self._real_parse_item(response)
 
 
-    def _parse_item(self, response):
-
-        self.logger.info('Start executing call back...')
+    def _real_parse_item(self, response):
 
         item = GovItem(
             domain_collection=None,
@@ -92,7 +91,14 @@ class GovSpider(CrawlSpider):
 
         if urls:
             for url in urls:
-                yield response.follow(url, callback=self.save_files, cb_kwargs=dict(item=item))
+                
+                url = response.urljoin(url)
+                self.logger.info(url)
+                yield scrapy.Request(
+                    "http://localhost:8050/render.html?url=" + url,
+                    callback=self.save_files, 
+                    cb_kwargs=dict(item=item)
+                )
 
 
     def save_files(self,response,item):
