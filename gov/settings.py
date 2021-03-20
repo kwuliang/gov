@@ -10,17 +10,14 @@ MONGO_DB = 'scrapy_gov'
 REDIS_HOST = '127.0.0.1'
 REDIS_PORT = 6379
 
-#DATA_DIR = ''
-DATA_DIR = '/home/jun/src/python-projects/gov/data'
+DATA_DIR = ''
 
-#DOMAINS_LIST = ''
-DOMAINS_LIST = '/home/jun/src/python-projects/gov/test.txt'
+DOMAINS_LIST = ''
 
 SPLASH_URL = 'http://localhost:8050'
 
 # Use redis to duplicate repeated data
-#REDIS_DUPLICATE = True
-REDIS_DUPLICATE = False
+REDIS_DUPLICATE = True
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
