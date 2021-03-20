@@ -17,12 +17,10 @@ from gov.settings import REDIS_HOST, REDIS_PORT, DATA_DIR, DOMAINS_LIST
 class GovSpider(CrawlSpider):
     name = 'gov'
 
-    #allowed_domains = ['']
-    #start_urls = ['']
 
     allowed_domains, start_urls = get_start_urls(DOMAINS_LIST)
     conn = Redis(host=REDIS_HOST, encoding='utf-8', port=REDIS_PORT)
-    print('Redis start successfully...')
+    print('Starting redis...')
 
     rules = (
         Rule(
@@ -43,52 +41,58 @@ class GovSpider(CrawlSpider):
 
             return ex
 
-    def parse_item(self, response):
+    def parse_item(self,response):
+        if not REDIS_DUPLICATE:
+            self._parse(self,response)
+        else:
+            is_crawled_status = self.is_crawled(response.body)
+
+            if is_crawled_status == -1:
+                self.logger.warning('PLease check if redis is start!')
+                return None
+            elif is_crawled_status == 0:
+                self.logger.info('数据没有进行更新')
+            elif is_crawled_status == 1:
+                self._parse_item(self,response)
+
+
+    def _parse_item(self, response):
 
         self.logger.info('Start executing call back...')
 
-        is_crawled_status = self.is_crawled(response.body)
+        item = GovItem(
+            domain_collection=None,
+            html=None,
+            pdf=[],
+            xls=[],
+            images=[],
+            others=[]
+        )
+        # 1.保存html
 
-        if is_crawled_status == -1:
-            self.logger.warning('PLease check if redis is start!')
-            return None
-        elif is_crawled_status == 0:
-            self.logger.info('数据没有进行更新')
-        elif is_crawled_status == 1:
+        filename = make_file_name(response.url, 'html')
+        item['html'] = filename
 
-            item = GovItem(
-                domain_collection=None,
-                html=None,
-                pdf=[],
-                xls=[],
-                images=[],
-                others=[]
-            )
-            # 1.保存html
+        domain = response.url.split('/')[2]
+        item['domain_collection'] = md5_encode(domain)
+        abpath = DATA_DIR + item['domain_collection']
 
-            filename = make_file_name(response.url, 'html')
-            item['html'] = filename
+        if not os.path.exists(abpath):  # 第一次创建文件夹
 
-            domain = response.url.split('/')[2]
-            item['domain_collection'] = md5_encode(domain)
-            abpath = DATA_DIR + item['domain_collection']
+            os.makedirs(abpath)
 
-            if not os.path.exists(abpath):  # 第一次创建文件夹
+        with open(abpath + '/' + filename, 'wb') as f:
+            f.write(response.body)
 
-                os.makedirs(abpath)
+        # 2.保存其他资源
+        images = response.selector.xpath('//img/@src').extract()
+        pdf = response.selector.xpath('//a/@href[contains(.,".pdf")]').extract()
+        xls = response.selector.xpath('//a/@href[contains(.,".xls")]').extract()
+        urls =  images + pdf + xls
 
-            with open(abpath + '/' + filename, 'wb') as f:
-                f.write(response.body)
-
-            # 2.保存其他资源
-            images = response.selector.xpath('//img/@src').extract()
-            pdf = response.selector.xpath('//a/@href[contains(.,'.pdf')]').extract()
-            xls = response.selector.xpath('//a/@href[contains(.,'.xls')]').extract()
-            urls =  images + pdf + xls
-
-            if urls:
-                for url in urls:
-                    yield response.follow(url, callback=self.save_files, cb_kwargs=dict(item=item))
+        if urls:
+            for url in urls:
+                yield response.follow(url, callback=self.save_files, cb_kwargs=dict(item=item))
 
 
     def save_files(self,response,item):
@@ -133,6 +137,6 @@ class GovSpider(CrawlSpider):
                             url=request.url, 
                             callback=self.parse_item,
                             args={
-                                'wait': 1
+                                'wait': 0.5
                                 }
                             )

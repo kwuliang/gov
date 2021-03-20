@@ -5,16 +5,22 @@ NEWSPIDER_MODULE = 'gov.spiders'
 
 
 MONGO_URI = '127.0.0.1:27017'
-MONGO_DB = ''
+MONGO_DB = 'scrapy_gov'
 
 REDIS_HOST = '127.0.0.1'
 REDIS_PORT = 6379
 
-DATA_DIR = ''
+#DATA_DIR = ''
+DATA_DIR = '/home/jun/src/python-projects/gov/data'
 
-DOMAINS_LIST = ''
+#DOMAINS_LIST = ''
+DOMAINS_LIST = '/home/jun/src/python-projects/gov/test.txt'
 
 SPLASH_URL = 'http://localhost:8050'
+
+# Use redis to duplicate repeated data
+#REDIS_DUPLICATE = True
+REDIS_DUPLICATE = False
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = False
